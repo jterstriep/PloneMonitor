@@ -2,9 +2,9 @@
 
 
 """
-argv[1] is name of script
-argv[2] location of the plone site
-argv[3] (optional) - poll vs responding to request
+argv[0] is name of script
+argv[1] location of the plone site
+argv[2] (optional) - poll vs responding to request (not implemented)
 """
 
 from urllib.parse import urljoin
