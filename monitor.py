@@ -27,7 +27,7 @@ def main():
     ## later hash value needs to be passed in by plone site
     full_url = urljoin(location, service_url + '?hash=12345')
     try:
-        print full_url
+        print "Connecting to", full_url
         response = urllib.urlopen(full_url)
         pretty = json.loads(response.read().decode())
         print pretty
