@@ -11,8 +11,7 @@ argv[3] password
 from urlparse import urljoin
 from sys import argv
 import urllib2, base64
-import json
-import subprocess, shlex, logging
+import subprocess, shlex, logging, time, json
 
 service_url = "@@get_next_job"
 server_poll_delay = 3.0 # seconds
@@ -107,11 +106,10 @@ def execute_job(start_string):
                 time.sleep(server_poll_delay)
                 # poll the server
                 if should_terminate_job(argv[1]):
+                    # kill the job and exit from the loop
                     p.kill()
                     break
 
-        # when current job was finished, get the next job if any
-        get_next_job(argv[1], argv[2], argv[3])
                 
 def should_terminate_job(location):
     # TODO
