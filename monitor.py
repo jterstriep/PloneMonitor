@@ -27,26 +27,23 @@ def main():
         print "Exiting script"
         return 1
 
-    response = get_next_job(argv[1], argv[2], argv[3])
 
-    logging.info('Got response: %s', response)
+    while True:
+        response = get_next_job(argv[1], argv[2], argv[3])
 
-    pretty = json.loads(response)
-    (status_ok, start_string) = parse_response(pretty)
-    if status_ok:
-        args = shlex.split(start_string)
-        try:
-            p = subprocess.Popen(args)
-            p.wait()
-            return 0
-        except OSError:
-            print 'Failed while trying to run ', start_string
+        logging.info('Got response: %s', response)
 
-    else:
-        logging.error('Could not get next job')
-        logging.warning('Shutting down the machine')
-        # posssibly shut down the machine here
-        return 1
+        pretty = json.loads(response)
+        (status_ok, start_string) = parse_response(pretty)
+        if status_ok:
+            execute_job(start_string)
+        else:
+            break
+
+    logging.error('Could not get next job')
+    logging.warning('Shutting down the machine')
+    # posssibly shut down the machine here
+    return 1
 
 def get_next_job(site_url, username, password):
 
