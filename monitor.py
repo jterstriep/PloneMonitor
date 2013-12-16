@@ -87,11 +87,17 @@ def parse_response(pretty):
 
 def execute_job(start_string):
     try:
-        args = shlex.split(start_string)
-        logging.info('Splitted start_string is: %s', str(args))
-        p = subprocess.Popen(args)
+        if isinstance(start_string, unicode):
+            logging.info('Trying to convert unicode start_string into ascii')
+            start_string = start_string.encode('ascii')
+        logging.info('start string: %s', start_string)
+        arr_start = shlex.split(start_string)
+        logging.info('Splitted start_string is: %s', str(arr_start))
+        p = subprocess.Popen(arr_start)
     except OSError:
         logging.error('Could not start: %s', start_string)
+    except TypeError:
+        logging.error('Invalid arg for starting process')
     else:
         while True:
             returncode = p.poll()
