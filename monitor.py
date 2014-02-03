@@ -4,8 +4,7 @@
 """
 argv[0] is name of script
 argv[1] location of the plone site
-argv[2] username
-argv[3] password
+argv[2] access_key
 """
 
 from urlparse import urljoin
@@ -22,13 +21,17 @@ logging.basicConfig(level=logging.DEBUG)
 def main():
     arg_count = len(argv)
     if arg_count < 4:
-        print 'Usage: python', argv[0], 'site_url username password'
+        print 'Usage: python', argv[0], 'site_url access_key [polling_delay]'
         print "Exiting script"
         return 1
 
+    if arg_count > 3:
+        server_poll_delay = int(argv[3])
+        if server_poll_delay <= 0:
+            server_poll_delay = 3
 
     while True:
-        response = get_next_job(argv[1], argv[2], argv[3])
+        response = get_next_job(argv[1], argv[2])
 
         logging.info('Got response: %s', response)
 
@@ -38,29 +41,30 @@ def main():
             execute_job(start_string)
         else:
             break
-
+        time.sleep(server_poll_delay)
+        
     logging.error('Could not get next job')
     logging.warning('Shutting down the machine')
     # posssibly shut down the machine here
     return 1
 
-def get_next_job(site_url, username, password):
+def get_next_job(site_url, access_key):
 
     if not site_url.startswith('http'):
         site_url = '%s%s' % ('http://', site_url)
 
-    logging.info('siteurl: %s username: %s password: %s', site_url, username, password)
+    logging.info('siteurl: %s access_key: %s', site_url, access_key)
 
     endpoint = urljoin(site_url, service_url)
-    userpass= base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    # userpass= base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
 
-    #delete this later, current implementation requires HASH
-    endpoint = urljoin(endpoint, '?hash=12345')
+    endpoint = urljoin(endpoint, '?hash=', access_key)
     logging.info('endpoint: %s', endpoint)
 
     request = urllib2.Request(endpoint)
     # add authentication header
-    request.add_header("Authorization", "Basic %s" % userpass)  
+    # request.add_header("Authorization", "Basic %s" % userpass)  
+
     try:
         logging.info('Connecting to %s', endpoint)
         response = urllib2.urlopen(request)
