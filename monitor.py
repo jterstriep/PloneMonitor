@@ -9,16 +9,17 @@ argv[2] access_key
 
 from urlparse import urljoin
 from sys import argv
-import urllib2, base64
+import urllib2
 import subprocess, shlex, logging, time, json
 
-service_url = "@@get_next_job"
-server_poll_delay = 3.0 # seconds
+SERVICE_URL = "@@get_next_job"
+SERVER_POLL_DELAY = 3.0 # seconds
 
 # enable logging
 logging.basicConfig(level=logging.DEBUG)
 
 def main():
+    """ The main function """
     arg_count = len(argv)
     if arg_count < 4:
         print 'Usage: python', argv[0], 'site_url access_key [polling_delay]'
@@ -26,9 +27,9 @@ def main():
         return 1
 
     if arg_count > 3:
-        server_poll_delay = int(argv[3])
-        if server_poll_delay <= 0:
-            server_poll_delay = 3
+        SERVER_POLL_DELAY = int(argv[3])
+        if SERVER_POLL_DELAY <= 0:
+            SERVER_POLL_DELAY = 3
 
     while True:
         response = get_next_job(argv[1], argv[2])
@@ -41,66 +42,78 @@ def main():
             execute_job(start_string)
         else:
             break
-        time.sleep(server_poll_delay)
-        
+        time.sleep(SERVER_POLL_DELAY)
+
     logging.error('Could not get next job')
     logging.warning('Shutting down the machine')
     # posssibly shut down the machine here
     return 1
 
 def get_next_job(site_url, access_key):
-
+    """ get the next job from plone """
     if not site_url.startswith('http'):
         site_url = '%s%s' % ('http://', site_url)
 
     logging.info('siteurl: %s access_key: %s', site_url, access_key)
 
-    endpoint = urljoin(site_url, service_url)
-    # userpass= base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    endpoint = urljoin(site_url, SERVICE_URL)
 
     endpoint = urljoin(endpoint, '?hash=', access_key)
     logging.info('endpoint: %s', endpoint)
 
     request = urllib2.Request(endpoint)
+
     # add authentication header
-    # request.add_header("Authorization", "Basic %s" % userpass)  
+    # request.add_header("Authorization", "Basic %s" % userpass)
 
     try:
         logging.info('Connecting to %s', endpoint)
         response = urllib2.urlopen(request)
         return response.read()
 
-    except Exception:
+    except urllib2.HTTPError as herror:
+        logging.error('Received error code ' + herror.code)
+        return 0
+    except urllib2.URLError:
         logging.error('Could not connect to server')
         return None
 
 
 def parse_response(pretty):
+    """ Parse the server response
+        Returns a tuple with (True, start_string) on success
+                        and (False, '') on failure
+    """
     if not 'response' in pretty:
         print 'Wrong response from server'
-        return (False,'')
+        return (False, '')
     response_status = pretty['response']
     if not response_status == 'OK':
         print 'Response is NOTOK'
-        return (False,'')
+        return (False, '')
     if not 'start_string' in pretty:
         print 'No start string is found'
-        return (False,'')
-    return (True,pretty['start_string'])
+        return (False, '')
+    return (True, pretty['start_string'])
 
 
 def execute_job(start_string):
+    """ Run the specified shell command
+        in a new process.
+        Polls the plone site about the state of the job
+        from the main thread
+    """
     try:
         arr_start = shlex.split(start_string)
         logging.info('Splitted start_string is: %s', str(arr_start))
-        p = subprocess.Popen(arr_start)
+        proc = subprocess.Popen(arr_start)
     except OSError:
         logging.error('Could not start: %s', start_string)
     except TypeError:
         logging.error('Invalid arg for starting process')
     else:
         while True:
-            returncode = p.poll()
+            returncode = proc.poll()
             if returncode:
                 logging.info('The job was finished with return code %s')
 
@@ -109,18 +122,16 @@ def execute_job(start_string):
             else:
                 # the process is still running
                 # sleep
-                time.sleep(server_poll_delay)
+                time.sleep(SERVER_POLL_DELAY)
                 # poll the server
                 if should_terminate_job(argv[1]):
                     # kill the job and exit from the loop
-                    p.kill()
+                    proc.kill()
                     break
 
-                
-def should_terminate_job(location):
-    # TODO
-    # make request to plone and check if the job should be terminated
-    return False
 
+def should_terminate_job(location):
+    """ TODO Make request to plone and check if the job should be terminated """
+    return False
 
 main()
