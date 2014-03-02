@@ -11,28 +11,31 @@ from urlparse import urljoin
 from sys import argv
 import urllib2
 import subprocess, shlex, logging, time, json
+from argparse import ArgumentParser
 
 SERVICE_URL = "@@get_next_job"
-SERVER_POLL_DELAY = 3.0 # seconds
+SERVER_POLL_DELAY = 3 # seconds
 
 # enable logging
 logging.basicConfig(level=logging.DEBUG)
 
 def main():
     """ The main function """
-    arg_count = len(argv)
-    if arg_count < 4:
-        print 'Usage: python', argv[0], 'site_url access_key [polling_delay]'
-        print "Exiting script"
-        return 1
 
-    if arg_count > 3:
-        SERVER_POLL_DELAY = int(argv[3])
-        if SERVER_POLL_DELAY <= 0:
-            SERVER_POLL_DELAY = 3
+    global SERVER_POLL_DELAY
+    # parse the command line arguments
+    parser = ArgumentParser(description='Execute shell script from plone site')
+    parser.add_argument('site_url')
+    parser.add_argument('access_key')
+    parser.add_argument('--polling_delay', default=SERVER_POLL_DELAY)
+
+    args = vars(parser.parse_args())
+
+    SERVER_POLL_DELAY = args['polling_delay']
+
 
     while True:
-        response = get_next_job(argv[1], argv[2])
+        response = get_next_job(args['site_url'], args['access_key'])
 
         logging.info('Got response: %s', response)
 
