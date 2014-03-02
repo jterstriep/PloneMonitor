@@ -137,4 +137,5 @@ def should_terminate_job(location):
     """ TODO Make request to plone and check if the job should be terminated """
     return False
 
-main()
+if __name__ == "__main__":
+    main()
