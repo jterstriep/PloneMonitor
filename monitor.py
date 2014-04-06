@@ -19,7 +19,7 @@ from argparse import ArgumentParser
 
 NEXT_JOB_SERVICE_URL = 'get_next_job'
 GET_STATUS_URL = 'provide_status'
-UPDATE_STATUS_URL = 'update_status'
+UPDATE_STATUS_URL = 'update_job_status'
 SERVER_POLL_DELAY = 3   # seconds
 
 # enable logging
