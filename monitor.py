@@ -135,7 +135,7 @@ def execute_job(start_string, vm_url, access_key):
     else:
         while True:
             returncode = proc.poll()
-            if returncode:
+            if returncode != None:
                 logging.info('The job was finished with return code %s')
 
                 update_job_status(vm_url, access_key,
