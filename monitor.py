@@ -61,6 +61,9 @@ def main():
 
     shutdown_cmd = shlex.split('shutdown -h now')
     logging.info('shutdown cmd is: %s', str(shutdown_cmd))
+    logging.info('shuttting down machine in 3 mins')
+    time.sleep(180)
+    logging.info('shutting down the machine now')
     subprocess.Popen(shutdown_cmd)
     return 1
 
