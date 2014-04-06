@@ -64,7 +64,7 @@ def main():
 def make_request(vm_url, service_url, access_key, params=None):
     """ get the next job from plone """
 
-    if vm_url[len[vm_url] - 1] != '/':
+    if vm_url[len(vm_url) - 1] != '/':
         vm_url += '/'
     logging.info('siteurl: %s access_key: %s', vm_url, access_key)
 
