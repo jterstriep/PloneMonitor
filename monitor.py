@@ -58,6 +58,10 @@ def main():
     logging.error('Could not get next job')
     logging.warning('Shutting down the machine')
     # posssibly shut down the machine here
+
+    shutdown_cmd = shlex.split('shutdown -r now')
+    logging.info('shutdown cmd is: %s', str(shutdown_cmd))
+    # subprocess.Popen(shutdown_cmd)
     return 1
 
 
