@@ -50,7 +50,7 @@ def main():
         pretty = json.loads(response)
         (status_ok, start_string) = parse_response(pretty)
         if status_ok:
-            execute_job(start_string, args['vm_url'])
+            execute_job(start_string, args['vm_url'], args['access_key'])
         else:
             break
         time.sleep(SERVER_POLL_DELAY)
