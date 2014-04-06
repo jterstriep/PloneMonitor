@@ -2,9 +2,7 @@
 
 
 """
-argv[0] is name of script
-argv[1] location of the vm
-argv[2] access_key
+Usage: monitor.py vm_url access_key [--polling_delay POLLING_DELAY]
 """
 
 from urlparse import urljoin
