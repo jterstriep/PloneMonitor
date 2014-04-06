@@ -59,7 +59,7 @@ def main():
     logging.warning('Shutting down the machine')
     # posssibly shut down the machine here
 
-    shutdown_cmd = shlex.split('shutdown -r now')
+    shutdown_cmd = shlex.split('shutdown -h now')
     logging.info('shutdown cmd is: %s', str(shutdown_cmd))
     subprocess.Popen(shutdown_cmd)
     return 1
