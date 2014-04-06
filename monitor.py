@@ -9,7 +9,7 @@ argv[2] access_key
 
 from urlparse import urljoin
 import urllib2
-import urllib.urlencode
+import urllib
 import subprocess
 import shlex
 import logging
@@ -61,7 +61,7 @@ def main():
     return 1
 
 
-def make_request(vm_url, service_url, access_key, params):
+def make_request(vm_url, service_url, access_key, params=None):
     """ get the next job from plone """
 
     logging.info('siteurl: %s access_key: %s', vm_url, access_key)
@@ -120,14 +120,20 @@ def execute_job(start_string, vm_url, access_key):
         proc = subprocess.Popen(arr_start)
     except OSError:
         logging.error('Could not start: %s', start_string)
+        update_job_status(vm_url, access_key,
+                          {'new_status': 'Failed', 'message': 'OSError'})
     except TypeError:
         logging.error('Invalid arg for starting process')
+        update_job_status(vm_url, access_key,
+                          {'new_status': 'Failed', 'message': 'TypeError'})
     else:
         while True:
             returncode = proc.poll()
             if returncode:
                 logging.info('The job was finished with return code %s')
 
+                update_job_status(vm_url, access_key,
+                                  {'new_status': 'Finished' if returncode == 0 else 'Failed'})
                 # break the loop
                 break
             else:
@@ -158,10 +164,9 @@ def should_terminate_job(vm_url, access_key):
         return False
 
 
-def update_job_status(vm_url, access_key, new_status):
+def update_job_status(vm_url, access_key, params):
 
-    response = make_request(vm_url, UPDATE_STATUS_URL, access_key,
-                            {'new_status': new_status})
+    response = make_request(vm_url, UPDATE_STATUS_URL, access_key, params)
     pretty = json.loads(response)
 
     if pretty.get('response', None):
