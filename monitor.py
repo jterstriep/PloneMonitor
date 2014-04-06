@@ -20,7 +20,7 @@ from argparse import ArgumentParser
 NEXT_JOB_SERVICE_URL = 'get_next_job'
 GET_STATUS_URL = 'provide_status'
 UPDATE_STATUS_URL = 'update_job_status'
-SERVER_POLL_DELAY = 3   # seconds
+SERVER_POLL_DELAY = 300   # seconds
 
 # enable logging
 logging.basicConfig(level=logging.DEBUG)
@@ -44,6 +44,9 @@ def main():
 
     while True:
         response = make_request(vm_url, NEXT_JOB_SERVICE_URL, args['access_key'])
+        if not response:
+            logging.error('Was not able to get response')
+            break
 
         logging.info('Got response: %s', response)
 
@@ -53,25 +56,21 @@ def main():
             execute_job(start_string, args['vm_url'], args['access_key'])
         else:
             break
-        time.sleep(SERVER_POLL_DELAY)
 
-    logging.error('Could not get next job')
+    logging.error('No jobs to be run on the VM')
     logging.warning('Shutting down the machine')
-    # posssibly shut down the machine here
-
     shutdown_cmd = shlex.split('shutdown -h now')
     logging.info('shutdown cmd is: %s', str(shutdown_cmd))
-    logging.info('shuttting down machine in 3 mins')
-    time.sleep(180)
+    logging.info('shuttting down machine in 1 minute')
+    time.sleep(60)
     logging.info('shutting down the machine now')
     subprocess.Popen(shutdown_cmd)
-    return 1
 
 
 def make_request(vm_url, service_url, access_key, params=None):
     """ get the next job from plone """
 
-    if vm_url[len(vm_url) - 1] != '/':
+    if vm_url[-1:] != '/':
         vm_url += '/'
     logging.info('siteurl: %s access_key: %s', vm_url, access_key)
 
@@ -138,7 +137,7 @@ def execute_job(start_string, vm_url, access_key):
     else:
         while True:
             returncode = proc.poll()
-            if returncode != None:
+            if returncode is not None:
                 logging.info('The job was finished with return code %s')
 
                 update_job_status(vm_url, access_key,
@@ -176,14 +175,18 @@ def should_terminate_job(vm_url, access_key):
 def update_job_status(vm_url, access_key, params):
 
     response = make_request(vm_url, UPDATE_STATUS_URL, access_key, params)
-    pretty = json.loads(response)
-
-    if pretty.get('response', None):
-        logging.info('update_job_status response is ' + str(pretty['response']))
-        return pretty['response'] == 'success'
-    else:
-        logging.info('Did not get a valid response from update_job_status')
+    if not response:
+        logging.error('Was not able to udpate job status')
         return False
+    else:
+        pretty = json.loads(response)
+
+        if pretty.get('response', None):
+            logging.info('update_job_status response is ' + str(pretty['response']))
+            return pretty['response'] == 'success'
+        else:
+            logging.info('Did not get a valid response from update_job_status')
+            return False
 
 if __name__ == "__main__":
     main()
