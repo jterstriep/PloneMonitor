@@ -7,7 +7,6 @@ Usage: monitor.py vm_url access_key [--polling_delay POLLING_DELAY]
 
 from urlparse import urljoin
 import urllib2
-import urllib
 import subprocess
 import shlex
 import logging
@@ -75,11 +74,14 @@ def make_request(vm_url, service_url, access_key, params=None):
     endpoint = urljoin(vm_url, service_url)
 
     endpoint = urljoin(endpoint, '?hash=%s' % access_key)
-    logging.info('endpoint: %s', endpoint)
 
-    request = urllib2.Request(endpoint)
     if params:
-        request.add_data(urllib.urlencode(params))
+        for param_key in params:
+            endpoint += '&%s=%s' % (param_key, params.get(param_key))
+
+    logging.info('endpoint: %s', endpoint)
+    request = urllib2.Request(endpoint)
+
     # add authentication header
     # request.add_header("Authorization", "Basic %s" % userpass)
 
