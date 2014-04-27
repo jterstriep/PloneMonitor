@@ -17,7 +17,7 @@ from argparse import ArgumentParser
 NEXT_JOB_SERVICE_URL = 'get_next_job'
 GET_STATUS_URL = 'provide_status'
 UPDATE_STATUS_URL = 'update_job_status'
-SERVER_POLL_DELAY = 300   # seconds
+SERVER_POLL_DELAY = 60   # seconds
 
 # enable logging
 logging.basicConfig(level=logging.DEBUG)
@@ -125,7 +125,7 @@ def execute_job(start_string, vm_url, access_key):
     try:
         arr_start = shlex.split(start_string)
         logging.info('Splitted start_string is: %s', str(arr_start))
-        proc = subprocess.Popen(arr_start)
+        proc = subprocess.Popen(arr_start, stderr=subprocess.PIPE)
     except OSError:
         logging.error('Could not start: %s', start_string)
         update_job_status(vm_url, access_key,
@@ -138,10 +138,20 @@ def execute_job(start_string, vm_url, access_key):
         while True:
             returncode = proc.poll()
             if returncode is not None:
-                logging.info('The job was finished with return code %s')
+                logging.info('The job was finished with return code %s', str(returncode))
 
-                update_job_status(vm_url, access_key,
-                                  {'new_status': 'Finished' if returncode == 0 else 'Failed'})
+                if returncode == 0:
+                    update_job_status(vm_url, access_key, {'new_status': 'Finished'})
+                else:
+                    _, stderr = proc.communicate()
+                    status_args = {
+                        'new_status': 'Failed'
+                    }
+                    if stderr:
+                        logging.info('Job failed with %s', stderr)
+                        status_args['reason'] = stderr
+                update_job_status(vm_url, access_key, status_args)
+
                 # break the loop
                 break
             else:
