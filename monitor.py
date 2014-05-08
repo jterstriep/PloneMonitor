@@ -130,11 +130,11 @@ def execute_job(start_string, vm_url, access_key):
     except OSError:
         logging.error('Could not start: %s', start_string)
         update_job_status(vm_url, access_key,
-                          {'new_status': 'Failed', 'reason': 'OSError'})
+                          {'new_status': 'Failed', 'reason': base64.b64encode('OSError')})
     except TypeError:
         logging.error('Invalid arg for starting process')
         update_job_status(vm_url, access_key,
-                          {'new_status': 'Failed', 'reason': 'TypeError'})
+                          {'new_status': 'Failed', 'reason': base64.b64encode('TypeError')})
     else:
         while True:
             returncode = proc.poll()
