@@ -12,7 +12,7 @@ import shlex
 import logging
 import time
 import json
-import base64   
+import base64
 from argparse import ArgumentParser
 
 NEXT_JOB_SERVICE_URL = 'get_next_job'
@@ -151,7 +151,7 @@ def execute_job(start_string, vm_url, access_key):
                     if stderr:
                         logging.info('Job failed with %s', stderr)
                         status_args['reason'] = base64.b64encode(stderr)
-                update_job_status(vm_url, access_key, status_args)
+                    update_job_status(vm_url, access_key, status_args)
 
                 # break the loop
                 break
